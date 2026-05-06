@@ -1,0 +1,159 @@
+diff --git a/Dockerfile b/Dockerfile
+new file mode 100644
+index 0000000..c65c83c
+--- /dev/null
++++ b/Dockerfile
+@@ -0,0 +1,92 @@
++# syntax=docker/dockerfile:1
++# All-in-one image for lazycat — runs FastAPI core + Next.js web in one container,
++# fronted by Next.js rewrites (no nginx; web rewrites /api/v1/* to 127.0.0.1:8000).
++
++# ---------- web builder ----------
++FROM node:20-slim AS web-builder
++ENV PNPM_HOME=/pnpm \
++    PATH=/pnpm:$PATH \
++    NEXT_TELEMETRY_DISABLED=1 \
++    BUILD_STANDALONE=1 \
++    API_BASE_URL=http://127.0.0.1:8000 \
++    NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
++RUN corepack enable
++WORKDIR /app
++COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
++COPY apps/web/package.json ./apps/web/package.json
++COPY apps/desktop/package.json ./apps/desktop/package.json
++RUN pnpm -r install --frozen-lockfile --filter web...
++COPY . .
++WORKDIR /app/apps/web
++RUN pnpm build
++
++# ---------- final ----------
++FROM python:3.12-slim AS final
++
++ENV PYTHONUNBUFFERED=1 \
++    PYTHONDONTWRITEBYTECODE=1 \
++    PYTHONUTF8=1 \
++    DATA_DIR=/app/data \
++    HOME=/app \
++    UV_CACHE_DIR=/tmp/uv-cache \
++    NODE_ENV=production \
++    NEXT_TELEMETRY_DISABLED=1 \
++    PORT=3000 \
++    HOSTNAME=0.0.0.0 \
++    API_BASE_URL=http://127.0.0.1:8000 \
++    NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
++
++RUN apt-get update && apt-get install -y --no-install-recommends \
++        ca-certificates \
++        curl \
++        ffmpeg \
++        gnupg \
++        imagemagick \
++        libgomp1 \
++        supervisor \
++        tini \
++    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
++    && apt-get install -y --no-install-recommends nodejs \
++    && rm -rf /var/lib/apt/lists/*
++
++# yt-dlp (multi-arch)
++RUN set -e; \
++    arch="$(uname -m)"; \
++    case "$arch" in \
++      x86_64|amd64)   asset="yt-dlp_linux" ;; \
++      aarch64|arm64)  asset="yt-dlp_linux_aarch64" ;; \
++      armv7l|armv7)   asset="yt-dlp_linux_armv7l" ;; \
++      *) echo "Unsupported arch for yt-dlp: $arch" >&2; exit 1 ;; \
++    esac; \
++    curl -fsSL -o /usr/local/bin/yt-dlp \
++      "https://github.com/yt-dlp/yt-dlp/releases/latest/download/${asset}"; \
++    chmod +x /usr/local/bin/yt-dlp; \
++    yt-dlp --version
++
++# uv
++COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
++
++WORKDIR /app
++
++# Python deps (cached separately)
++COPY services/core/pyproject.toml services/core/uv.lock ./services/core/
++RUN cd services/core && uv sync --frozen --no-cache
++
++# Core source
++COPY services/core ./services/core
++
++# Web standalone bundle
++COPY --from=web-builder /app/apps/web/.next/standalone ./web
++COPY --from=web-builder /app/apps/web/.next/static     ./web/apps/web/.next/static
++COPY --from=web-builder /app/apps/web/public           ./web/apps/web/public
++
++# Lazycat glue
++COPY supervisord.conf       /etc/supervisor/supervisord.conf
++COPY lazycat-entrypoint.sh  /usr/local/bin/lazycat-entrypoint.sh
++RUN chmod +x /usr/local/bin/lazycat-entrypoint.sh \
++    && mkdir -p /app/data /var/log/supervisor
++
++EXPOSE 3000
++
++ENTRYPOINT ["/usr/bin/tini", "--"]
++CMD ["/usr/local/bin/lazycat-entrypoint.sh"]
+diff --git a/lazycat-entrypoint.sh b/lazycat-entrypoint.sh
+new file mode 100755
+index 0000000..28c3cd4
+--- /dev/null
++++ b/lazycat-entrypoint.sh
+@@ -0,0 +1,15 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++# Persisted dirs
++mkdir -p /app/data
++chmod 0775 /app/data || true
++
++# Faster-whisper / huggingface caches go inside the persisted volume
++# so model weights survive container upgrades.
++export HF_HOME=${HF_HOME:-/app/data/.cache/huggingface}
++export TORCH_HOME=${TORCH_HOME:-/app/data/.cache/torch}
++export XDG_CACHE_HOME=${XDG_CACHE_HOME:-/app/data/.cache}
++mkdir -p "$HF_HOME" "$TORCH_HOME" "$XDG_CACHE_HOME"
++
++exec /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
+diff --git a/supervisord.conf b/supervisord.conf
+new file mode 100644
+index 0000000..bf1fa3a
+--- /dev/null
++++ b/supervisord.conf
+@@ -0,0 +1,34 @@
++[supervisord]
++nodaemon=true
++user=root
++logfile=/dev/stdout
++logfile_maxbytes=0
++pidfile=/var/run/supervisord.pid
++
++[program:core]
++command=/app/services/core/.venv/bin/python main.py
++directory=/app/services/core
++environment=DATA_DIR="/app/data",PORT="8000",PYTHONUNBUFFERED="1",HOME="/app"
++autostart=true
++autorestart=true
++stopsignal=TERM
++stopwaitsecs=20
++stdout_logfile=/dev/stdout
++stdout_logfile_maxbytes=0
++stderr_logfile=/dev/stderr
++stderr_logfile_maxbytes=0
++priority=10
++
++[program:web]
++command=/usr/bin/node /app/web/apps/web/server.js
++directory=/app/web
++environment=NODE_ENV="production",PORT="3000",HOSTNAME="0.0.0.0",API_BASE_URL="http://127.0.0.1:8000",NEXT_PUBLIC_API_BASE_URL="http://127.0.0.1:8000",NEXT_TELEMETRY_DISABLED="1"
++autostart=true
++autorestart=true
++stopsignal=TERM
++stopwaitsecs=20
++stdout_logfile=/dev/stdout
++stdout_logfile_maxbytes=0
++stderr_logfile=/dev/stderr
++stderr_logfile_maxbytes=0
++priority=20

@@ -1,0 +1,100 @@
+package: cloud.lazycat.app.video-helper
+version: ${VERSION}
+name: Video Helper
+description: 基于 AI 的智能视频学习助手 — 自动思维导图 / 重点摘要 / 双向联动 / AI 问答
+author: LDJ-creat
+license: MIT
+homepage: https://github.com/microlazy-apps/lazy-video-helper
+locales:
+  zh-CN:
+    name: Video Helper
+    description: 自托管 Video Helper —— AI 视频学习助手，输入视频链接自动生成思维导图与重点摘要
+    usage: |
+      ## 关于 Video Helper
+
+      Video Helper 是基于 AI 的智能视频学习助手。给它一个视频链接（B 站 / YouTube / TikTok）
+      或上传本地视频，自动完成：
+
+      - 视频下载、音频转录、关键帧截取
+      - 由 LLM 智能决策提取重点
+      - 生成可视化**思维导图**（点节点跳转到对应内容模块）
+      - 生成结构化**重点摘要**（点摘要跳转到视频对应时间戳）
+      - **AI 问答** —— 基于视频内容多轮对话
+      - **练习画布** —— AI 根据视频出题，形成学习闭环
+
+      ## 配置
+
+      装好后访问 https://video-helper.{你的微服域名}，**第一次使用**进入设置页填：
+
+      - **LLM API Key**（必填）
+      - **LLM Base URL**（默认 `https://api.openai.com/v1`，可改为通义千问/DeepSeek/Ollama 等任何 OpenAI 兼容接口）
+      - **LLM 模型名**（如 `gpt-4o-mini` / `qwen-plus` / `deepseek-chat`）
+      - **Whisper 模型** —— 内置 faster-whisper，默认 `base`，CPU 也能跑
+
+      安装时如果在 Deploy Params 里填了上述参数，会作为容器初始默认值，
+      用户依然可以在 Web UI 里覆盖。
+
+      ## 数据持久化
+
+      - `/lzcapp/var/data/` —— SQLite 数据库 + 视频缓存 + 转录文本 + 思维导图
+
+      备份只需复制这个目录。
+
+      ## 注意事项
+
+      - 第一次启动时后端会下载 faster-whisper 模型权重（数百 MB），可能等待几分钟
+      - 视频转录速度取决于硬件；只有 CPU 时建议使用 `tiny` / `base` 模型
+      - 如需 GPU 加速，懒猫微服当前不暴露 GPU；建议大模型用云端 LLM
+
+      ## 上游
+
+      Upstream: https://github.com/LDJ-creat/video-helper
+      本仓库（懒猫包装）: https://github.com/microlazy-apps/lazy-video-helper
+  en:
+    name: Video Helper
+    description: Self-hosted Video Helper — AI video learning assistant with mind-map and summaries
+    usage: |
+      ## About Video Helper
+
+      Video Helper is an AI-powered video learning assistant. Give it a video URL
+      (Bilibili / YouTube / TikTok) or upload a local file. It automatically:
+
+      - Downloads the video, transcribes audio, extracts keyframes
+      - Uses an LLM to extract knowledge points
+      - Builds a visual **mind-map** (click a node → jump to the matching note)
+      - Generates structured **highlight notes** (click a note → seek video)
+      - **AI Q&A** — multi-turn chat grounded in the video content
+      - **Quiz Canvas** — AI generates practice questions from the video
+
+      ## Configuration
+
+      After install, open https://video-helper.{your-box-domain} and on first use
+      go to Settings to fill:
+
+      - **LLM API Key** (required)
+      - **LLM Base URL** (default `https://api.openai.com/v1`; works with any
+        OpenAI-compatible endpoint: Qwen / DeepSeek / Ollama / etc.)
+      - **LLM Model** (e.g. `gpt-4o-mini` / `qwen-plus` / `deepseek-chat`)
+      - **Whisper Model** — built-in faster-whisper, default `base`, CPU friendly
+
+      Values supplied at install via Deploy Params are container-level defaults;
+      Web UI settings always win.
+
+      ## Persistent storage
+
+      - `/lzcapp/var/data/` — SQLite DB + video cache + transcripts + mind-maps
+
+      Back up by copying this directory.
+
+      ## Notes
+
+      - On first launch the backend downloads faster-whisper weights (hundreds
+        of MB) — may take a few minutes
+      - Transcription speed depends on hardware; on CPU only, prefer `tiny`/`base`
+      - The lazycat platform currently does not expose GPU; use cloud LLM for
+        heavy inference
+
+      ## Upstream
+
+      Upstream: https://github.com/LDJ-creat/video-helper
+      This wrapper repo: https://github.com/microlazy-apps/lazy-video-helper

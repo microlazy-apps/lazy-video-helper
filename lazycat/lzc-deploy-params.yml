@@ -1,0 +1,24 @@
+params:
+  - id: LLM_API_KEY
+    type: password
+    name: "LLM API Key"
+    description: "OpenAI 兼容的 LLM API Key（OpenAI / 通义千问 / DeepSeek / Ollama 等）。也可以装好后在 Web UI 设置中填。"
+    optional: true
+  - id: LLM_BASE_URL
+    type: string
+    name: "LLM Base URL"
+    description: "OpenAI 兼容接口地址。默认 https://api.openai.com/v1"
+    default_value: "https://api.openai.com/v1"
+    optional: true
+  - id: LLM_MODEL
+    type: string
+    name: "LLM Model"
+    description: "默认 gpt-4o-mini，可改为 qwen-plus / deepseek-chat / glm-4 等"
+    default_value: "gpt-4o-mini"
+    optional: true
+  - id: WHISPER_MODEL
+    type: string
+    name: "Whisper Model"
+    description: "faster-whisper 模型大小：tiny / base / small / medium / large-v3。CPU 建议 tiny 或 base"
+    default_value: "base"
+    optional: true

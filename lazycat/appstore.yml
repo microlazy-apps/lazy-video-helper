@@ -1,0 +1,62 @@
+source: https://github.com/LDJ-creat/video-helper
+source_author: LDJ-creat
+is_original: false
+keywords: ai,video,learning,mindmap,transcript,llm,whisper,fastapi,nextjs,bilibili,youtube
+support_pc: true
+support_mobile: false
+
+screenshots:
+  pc:
+    - lazycat/screenshots/01-home.png
+    - lazycat/screenshots/02-mindmap.png
+    - lazycat/screenshots/03-quiz.png
+  mobile: []
+
+description:
+  zh-CN: |
+    Video Helper 是基于 AI 的视频学习助手。给它一段 B 站 / YouTube / TikTok
+    视频，自动产出思维导图、重点摘要、AI 问答和练习题。
+
+    特性
+    - 智能流水线 - 视频下载 → 音频转录 → 关键帧 → 重点提取
+    - 动态思维导图 - 节点可缩放、拖拽、增删
+    - 双向联动 - 思维导图 ↔ 重点摘要 ↔ 视频时间戳互相跳转
+    - AI 问答 - 基于视频内容多轮对话
+    - 练习画布 - AI 自动出题，复习闭环
+    - 灵活编辑 - 手动调整思维导图与笔记
+
+    技术栈
+    - 前端：Next.js 16 + React 19 + ReactFlow + Tiptap
+    - 后端：FastAPI (Python 3.12) + SQLite + faster-whisper
+    - 视频下载：yt-dlp（B 站 / YouTube / TikTok 等）
+
+    依赖
+    - LLM API Key（OpenAI 兼容任一）
+    - 第一次启动会下载 faster-whisper 模型权重（数百 MB）
+
+    上游项目: https://github.com/LDJ-creat/video-helper
+    本仓库（懒猫包装）: https://github.com/microlazy-apps/lazy-video-helper
+  en: |
+    Video Helper is an AI-powered video learning assistant. Give it a Bilibili /
+    YouTube / TikTok URL or upload a local file; it auto-generates a mind-map,
+    structured highlights, AI Q&A and practice quizzes.
+
+    Features
+    - Smart pipeline — download → transcribe → keyframes → highlight extraction
+    - Dynamic mind-map — zoomable, draggable, editable nodes
+    - Two-way linking — mind-map ↔ notes ↔ video timestamps cross-jump
+    - AI Q&A — multi-turn chat grounded on the video
+    - Quiz canvas — AI generates practice questions from the content
+    - Manual editing — tweak the mind-map and notes by hand
+
+    Stack
+    - Frontend: Next.js 16 + React 19 + ReactFlow + Tiptap
+    - Backend: FastAPI (Python 3.12) + SQLite + faster-whisper
+    - Downloader: yt-dlp (Bilibili / YouTube / TikTok / …)
+
+    Requires
+    - An LLM API key (any OpenAI-compatible)
+    - On first launch the backend downloads faster-whisper weights (hundreds of MB)
+
+    Upstream project: https://github.com/LDJ-creat/video-helper
+    This wrapper repo: https://github.com/microlazy-apps/lazy-video-helper
