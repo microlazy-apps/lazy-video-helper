@@ -5,6 +5,11 @@ description: 基于 AI 的智能视频学习助手 — 自动思维导图 / 重�
 author: LDJ-creat
 license: MIT
 homepage: https://github.com/microlazy-apps/lazy-video-helper
+
+unsupported_platforms:
+  - ios
+  - android
+
 locales:
   zh-CN:
     name: Video Helper
