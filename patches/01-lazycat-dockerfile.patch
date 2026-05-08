@@ -151,10 +151,10 @@ index 0000000..7acbdd8
 +exec /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
 diff --git a/supervisord.conf b/supervisord.conf
 new file mode 100644
-index 0000000..6fbde48
+index 0000000..2752a68
 --- /dev/null
 +++ b/supervisord.conf
-@@ -0,0 +1,34 @@
+@@ -0,0 +1,39 @@
 +[supervisord]
 +nodaemon=true
 +user=root
@@ -177,7 +177,12 @@ index 0000000..6fbde48
 +priority=10
 +
 +[program:web]
-+command=/usr/bin/node /app/web/apps/web/server.js
++# Wait for the FastAPI core to be serving 200 on /api/v1/health before
++# starting Next.js. This eliminates the cold-start window where Next.js
++# is up on :3000 but core is still importing heavy deps, during which
++# every proxied request returned 502/500 — confusing both the lazycat
++# platform health probe and any user that hit the page early.
++command=/bin/sh -c "until curl -fsS http://127.0.0.1:8000/api/v1/health >/dev/null 2>&1; do echo '[web] waiting for core /api/v1/health...'; sleep 1; done; echo '[web] core ready, starting Next.js'; exec /usr/bin/node /app/web/apps/web/server.js"
 +directory=/app/web
 +environment=NODE_ENV="production",PORT="3000",HOSTNAME="0.0.0.0",API_BASE_URL="http://127.0.0.1:8000",NEXT_PUBLIC_API_BASE_URL="http://127.0.0.1:8000",NEXT_TELEMETRY_DISABLED="1"
 +autostart=true

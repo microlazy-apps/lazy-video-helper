@@ -8,7 +8,11 @@ application:
   health_check:
     test_url: http://main:3000/api/v1/health
     timeout: 10s
-    start_period: 90s
+    # Cold start budget: Python venv import (faster-whisper / langchain /
+    # torch) + init_db + worker_loop start measured at ~110-170s in
+    # production. Keep generous headroom so first install isn't flagged
+    # as error_state before the FastAPI core finishes booting.
+    start_period: 300s
 
 services:
   main:
@@ -39,8 +43,13 @@ services:
     binds:
       - /lzcapp/var/data:/app/data
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:3000/api/v1/health"]
+      # Hit FastAPI directly on :8000 — bypass the Next.js proxy at :3000
+      # that would return 502/500 while core is still importing heavy
+      # Python deps. Container is "healthy" only when the actual API is
+      # serving 200; lazycat platform health (application.health_check
+      # above) still goes through :3000 as users do.
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/api/v1/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 90s
+      start_period: 300s
