@@ -2,6 +2,15 @@
 
 懒猫微服 wrapper for [LDJ-creat/video-helper](https://github.com/LDJ-creat/video-helper)。
 
+## Lazycat appstore identifiers
+
+- **package id**: `cloud.lazycat.app.video-helper`
+- **app_id**: `5340` (recorded 2026-05-08)
+- **subdomain**: `video-helper` → `https://video-helper.<box-domain>`
+- **bootstrap workflow**: when re-running `bootstrap-app.yml` to
+  resubmit a fix, pass `app_id=5340` so the workflow skips
+  `/app/create` (which would 500 on duplicate package).
+
 ## 仓库结构
 
 ```
